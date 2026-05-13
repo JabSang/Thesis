@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Dispatch Command Center – CDO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; background: #e2e8f0; color: #1a202c; }
+
+        /* Full Screen Map */
+        #map-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        #mapFrame { width: 100%; height: 100%; border: none; display: block; }
+
+        /* Loader */
+        #loader {
+            position: absolute; inset: 0; z-index: 5;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px); gap: 16px;
+        }
+        .spinner-ring {
+            width: 56px; height: 56px; border: 5px solid rgba(49, 130, 206, 0.2); border-top-color: #3182ce;
+            border-radius: 50%; animation: spin 0.85s linear infinite;
+        }
+        #loader p { font-size: 0.95rem; color: #2b6cb0; font-weight: 600; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Floating Input Panel – top-left */
+        #input-panel {
+            position: fixed; top: 20px; left: 20px; width: 320px; z-index: 9999;
+            background: rgba(255, 255, 255, 0.96); border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); padding: 18px;
+            font-size: 13px; max-height: 90vh; overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+        #input-panel::-webkit-scrollbar { width: 4px; }
+        #input-panel::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 2px; }
+
+        /* Typography */
+        .header-title { font-weight: 700; font-size: 1.15rem; color: #1a202c; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+        .header-sub   { font-size: 0.75rem; color: #718096; margin-bottom: 16px; }
+        .section-heading { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #4a5568; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+
+        /* Form Controls */
+        .field-group { margin-bottom: 14px; }
+        .field-label { font-size: 0.72rem; font-weight: 700; color: #2b6cb0; text-transform: uppercase; display: block; margin-bottom: 6px; }
+        .custom-input, .custom-select {
+            width: 100%; border: 1px solid #cbd5e0; border-radius: 6px; padding: 8px 10px;
+            font-size: 0.85rem; outline: none; transition: border-color 0.2s; font-family: inherit; background: #fdfdfd; color: #1a202c;
+        }
+        .custom-input:focus, .custom-select:focus { border-color: #3182ce; }
+        .custom-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%234a5568' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.5 5l6.5 7 6.5-7H1.5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+        .help-text { font-size: 0.7rem; color: #718096; margin-top: 4px; }
+
+        .check-group { display: flex; flex-direction: column; gap: 5px; }
+        .check-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; background: #f7fafc; border: 1px solid #e2e8f0; cursor: pointer; transition: background 0.1s; }
+        .check-item:hover { background: #ebf8ff; border-color: #bee3f8; }
+        .check-item label { font-size: 0.8rem; cursor: pointer; flex: 1; }
+        .check-item input[type=checkbox] { accent-color: #3182ce; width: 14px; height: 14px; cursor: pointer; }
+
+        .hazard-list { max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 4px; }
+        .hazard-list::-webkit-scrollbar { width: 4px; }
+        .hazard-list::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 2px; }
+
+        .run-btn {
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            background: #2b6cb0; color: white; font-weight: 700; font-size: 0.9rem; text-transform: uppercase;
+            cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(43,108,176,0.3); transition: all 0.2s;
+        }
+        .run-btn:hover:not(:disabled) { background: #2c5282; transform: translateY(-1px); }
+        .run-btn:disabled { background: #a0aec0; cursor: not-allowed; box-shadow: none; transform: none; }
+    </style>
+</head>
+<body>
+
+    <!-- 100vw 100vh Fill -->
+    <div id="map-container">
+        <iframe id="mapFrame" src="about:blank" title="Simulation Map" allowfullscreen></iframe>
+        <div id="loader">
+            <div class="spinner-ring"></div>
+            <p>Computing Routes & Scenarios…</p>
+        </div>
+    </div>
+
+    <!-- Floating Input Panel (Top Right) -->
+    <div id="input-panel">
+        <div class="header-title"><span>🚨</span> Command Config</div>
+        <div class="header-sub">Emergency Dispatch Simulator</div>
+
+        <form id="simForm" autocomplete="off">
+            <div class="section-heading">Operating Mode</div>
+            <div class="field-group" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <label style="font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                    <input type="radio" name="sim_mode" value="free_play" checked onchange="toggleMode()"> Free Play
+                </label>
+                <label style="font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                    <input type="radio" name="sim_mode" value="case_study" onchange="toggleMode()"> Case Studies
+                </label>
+            </div>
+
+            <div id="caseStudyConfig" style="display: none; margin-bottom: 20px; padding: 12px; background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 8px;">
+                <label class="field-label" style="color: #2b6cb0;">Select Chapter 4 Scenario</label>
+                <select class="custom-select" id="scenario_id" style="border-color: #90cdf4; margin-bottom: 10px;">
+                    <option value="A">Scenario A: 2:00 AM Clear Roads (Control)</option>
+                    <option value="B">Scenario B: 5:30 PM C.M. Recto Gridlock</option>
+                    <option value="C">Scenario C: 1:00 PM Agora Flood Event</option>
+                    <option value="D">Scenario D: Carmen Bridge Hard Roadblock</option>
+                    <option value="scenario_e">Scenario E: Multi-Casualty Mass Dispatch</option>
+                </select>
+                
+                <label class="field-label" style="color: #2b6cb0;">Emergency Type</label>
+                <select class="custom-select" id="cs_incident_type" style="border-color: #90cdf4; margin-bottom: 10px;">
+                    <option value="Fire Problem">🔥 Fire Problem (BFP)</option>
+                    <option value="Medical Emergency">🚑 Medical Emergency</option>
+                </select>
+                
+                <label class="field-label" style="color: #2b6cb0;">Alarm Level</label>
+                <select class="custom-select" id="cs_alarm_level" style="border-color: #90cdf4;">
+                    <option value="1">Level 1</option>
+                    <option value="2">Level 2</option>
+                    <option value="3">Level 3</option>
+                </select>
+            </div>
+
+            <div class="section-heading">Parameters</div>
+            
+            <div class="field-group" id="group_num_incidents">
+                <label class="field-label" for="num_incidents">Total Incidents (Medical Only)</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="range" class="custom-input" id="num_incidents" min="1" max="5" value="1" oninput="document.getElementById('num_incidents_val').innerText=this.value" style="flex: 1;">
+                    <span id="num_incidents_val" style="font-weight: bold; color: #2b6cb0; width: 20px;">1</span>
+                </div>
+                <p class="help-text" id="num_incidents_help">Range: 1 – 5 concurrent emergencies</p>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="sim_time">Time of Dispatch</label>
+                <input type="time" class="custom-input" id="sim_time" name="sim_time" value="17:30">
+                <p class="help-text">Set manual dispatch hour to simulate peak conditions</p>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Emergency Types</label>
+                <div class="check-group">
+                    <label class="check-item"><input class="inc-type" type="checkbox" value="Fire Problem" onchange="updateIncidentCountConstraint()"><label>🔥 Fire Problem (BFP)</label></label>
+                    <label class="check-item"><input class="inc-type" type="checkbox" value="Medical Emergency" checked onchange="updateIncidentCountConstraint()"><label>🚑 Medical Emergency</label></label>
+                    <label class="check-item"><input class="inc-type" type="checkbox" value="Flood Evacuation / Rescue" onchange="updateIncidentCountConstraint()"><label>🌊 Flood Evacuation</label></label>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="alarm_level">🔔 Fire Alarm Level (BFP Standard)</label>
+                <select class="custom-select" id="alarm_level">
+                    <option value="1">1st Alarm – 4 Engines</option>
+                    <option value="2">2nd Alarm – 8 Engines</option>
+                    <option value="3" selected>3rd Alarm – 12 Engines</option>
+                    <option value="4">4th Alarm – 16 Engines</option>
+                    <option value="5">5th Alarm – 20+ Engines</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Road Blockades</label>
+                <div class="hazard-list">
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="C.M. Recto Avenue"><label>C.M. Recto Avenue</label></label>
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="Corrales Avenue"><label>Corrales Avenue</label></label>
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="Osmeña Street"><label>Osmeña Street</label></label>
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="J.R. Borja Street"><label>J.R. Borja Street</label></label>
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="Velez Street"><label>Velez Street</label></label>
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="Kauswagan Highway"><label>Kauswagan Highway</label></label>
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="Masterson Avenue"><label>Masterson Avenue</label></label>
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="Lapasan Highway"><label>Lapasan Highway</label></label>
+                    <label class="check-item"><input class="hazard-type" type="checkbox" value="Carmen Bridge"><label>Carmen Bridge</label></label>
+                </div>
+            </div>
+
+            <button type="submit" class="run-btn" id="runBtn">⚡ Generate Map</button>
+        </form>
+    </div>
+
+    <script>
+    function toggleMode() {
+        var isCaseStudy = document.querySelector('input[name="sim_mode"]:checked').value === 'case_study';
+        document.getElementById('caseStudyConfig').style.display = isCaseStudy ? 'block' : 'none';
+        document.getElementById('group_num_incidents').style.display = isCaseStudy ? 'none' : 'block';
+        document.getElementById('group_sim_time').style.display = isCaseStudy ? 'none' : 'block';
+    }
+
+    function updateIncidentCountConstraint() {
+        var types = Array.from(document.querySelectorAll('.inc-type:checked')).map(function(c){ return c.value; });
+        var numInput = document.getElementById('num_incidents');
+        var helpText = document.getElementById('num_incidents_help');
+        if (types.includes('Fire Problem')) {
+            numInput.value = 1;
+            numInput.disabled = true;
+            document.getElementById('num_incidents_val').innerText = '1';
+            helpText.innerText = 'Forced to 1 (Disabled when Fire Problem is active)';
+        } else {
+            numInput.disabled = false;
+            document.getElementById('num_incidents_val').innerText = numInput.value;
+            helpText.innerText = 'Range: 1 – 5 concurrent emergencies';
+        }
+    }
+    
+    // Initialize state on load
+    document.addEventListener("DOMContentLoaded", function() {
+        updateIncidentCountConstraint();
+    });
+
+    // Strategy toggler for Scenario E UI Safeguard
+    document.getElementById('scenario_id').addEventListener('change', function(e) {
+        var scenario = e.target.value;
+        var csIncidentType = document.getElementById('cs_incident_type');
+        
+        var fireCb = document.querySelector('.inc-type[value="Fire Problem"]');
+        var medCb = document.querySelector('.inc-type[value="Medical Emergency"]');
+        
+        if (scenario === 'scenario_e') {
+            csIncidentType.value = 'Medical Emergency';
+            csIncidentType.disabled = true;
+            
+            if (fireCb) {
+                fireCb.checked = false;
+                fireCb.disabled = true;
+            }
+            if (medCb) {
+                medCb.checked = true;
+                medCb.disabled = true;
+            }
+        } else {
+            csIncidentType.disabled = false;
+            if (fireCb) fireCb.disabled = false;
+            if (medCb) medCb.disabled = false;
+        }
+        
+        updateIncidentCountConstraint();
+    });
+
+    document.getElementById('simForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        var types = Array.from(document.querySelectorAll('.inc-type:checked')).map(function(c){ return c.value; });
+        if (types.length === 0) { alert('Select at least one Emergency Type.'); return; }
+
+        var btn    = document.getElementById('runBtn');
+        var iframe = document.getElementById('mapFrame');
+        var loader = document.getElementById('loader');
+
+        // UI toggles
+        btn.disabled = true;
+        btn.textContent = '⏳ Running…';
+        iframe.style.display = 'none';
+        loader.style.display = 'flex';
+
+        var mode          = document.querySelector('input[name="sim_mode"]:checked').value;
+        var num_incidents = parseInt(document.getElementById('num_incidents').value, 10);
+        var alarm_level   = parseInt(document.getElementById('alarm_level').value, 10);
+        var sim_time      = document.getElementById('sim_time').value;
+        var hazards       = Array.from(document.querySelectorAll('.hazard-type:checked')).map(function(c){ return c.value; });
+
+        var payload = {};
+        if (mode === 'case_study') {
+            payload = { 
+                mode: 'case_study', 
+                scenario_id: document.getElementById('scenario_id').value,
+                incident_type: document.getElementById('cs_incident_type').value,
+                alarm_level: parseInt(document.getElementById('cs_alarm_level').value, 10)
+            };
+        } else {
+            payload = { mode: 'free_play', num_incidents: num_incidents, alarm_level: alarm_level, incident_types: types, custom_hazards: hazards, sim_time: sim_time };
+        }
+
+        try {
+            var resp = await fetch('/run_simulation', {
+                method:  'POST',
+                headers: {'Content-Type': 'application/json'},
+                body:    JSON.stringify(payload)
+            });
+            var data = await resp.json();
+            if (data.status === 'success') {
+                iframe.srcdoc = data.html;
+            } else {
+                alert('Simulation error: ' + data.message);
+            }
+        } catch(err) {
+            alert('Server error: ' + err);
+        }
+
+        loader.style.display = 'none';
+        iframe.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '⚡ Generate Map';
+    });
+    </script>
+</body>
+</html>

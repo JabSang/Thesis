@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_612703eab1d00528c1d2c6f441e37b03 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div style="position: fixed; 
+                 bottom: 50px; left: 50px; width: 300px; height: auto; 
+                 background-color: rgba(255, 255, 255, 0.95); z-index:9999; font-family: Arial, sans-serif; font-size:14px;
+                 border: 2px solid #555; border-radius: 10px; padding: 15px;
+                 box-shadow: 3px 3px 15px rgba(0,0,0,0.5);">
+                 <h4 style="margin-top:0; margin-bottom:10px; color:#333;">Normal Conditions (Realistic)</h4>
+                 <div id="live_status" style="margin-bottom:10px; font-weight:bold; color:#0056b3; font-size:12px; min-height:40px;">Waiting for incident...</div>
+                 <hr style="border-color:#ccc; margin-top:0;">
+                 <b style="color:#d9534f;">Baseline System</b><br>
+                 Outbound Avg: <span id="baseline_avg">0.00</span> mins<br>
+                 Vehicles Deployed: <span id="baseline_deployed">0</span><br>
+                 Responding Stations: <span id="baseline_stats">0</span><br>
+                 Reassignments Triggered: <span id="baseline_reassign">0</span><br>
+                 Uncovered Incidents: <span id="baseline_unc">0</span><br>
+                 <hr style="border-color:#ccc;">
+                 <b style="color:#0275d8;">Enhanced GA System</b><br>
+                 Outbound Avg: <span id="ega_avg">0.00</span> mins<br>
+                 Vehicles Deployed: <span id="ega_deployed">0</span><br>
+                 Responding Stations: <span id="ega_stats">0</span><br>
+                 Reassignments Triggered: <span id="ega_reassign">0</span><br>
+                 Uncovered Incidents: <span id="ega_unc">0</span><br>
+            </div>
+            
+    
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                setTimeout(function() {
+                    var map = null;
+                    for (var key in window) {
+                        if (key.startsWith('map_')) {
+                            map = window[key];
+                            break;
+                        }
+                    }
+                    
+                    if (map) {
+                        var events = [{"incident_id": 0, "type": "Medical Emergency", "incident_coord": [8.4547358, 124.6239866], "Baseline": {"route_coords": [[8.4759761, 124.6448763], [8.4762052, 124.6440221], [8.4763891, 124.6432833], [8.4765503, 124.6426382], [8.4767124, 124.6419892], [8.4760971, 124.641737], [8.4761146, 124.6413323], [8.4765772, 124.6378327], [8.4759289, 124.6378301], [8.4750779, 124.6378357], [8.47463, 124.6378317], [8.4742612, 124.6378306], [8.4738324, 124.6378335], [8.4734552, 124.6378314], [8.4729154, 124.6377366], [8.4707646, 124.6287628], [8.4701226, 124.6286514], [8.4679006, 124.6268614], [8.4675068, 124.6267149], [8.464966, 124.6254432], [8.4643073, 124.6250465], [8.4633218, 124.624948], [8.4612034, 124.6255524], [8.4610728, 124.6255958], [8.4588649, 124.6252792], [8.4576618, 124.6249026], [8.4575743, 124.6248752], [8.4567701, 124.6246234], [8.4550702, 124.6240912], [8.4547358, 124.6239866], [8.4550702, 124.6240912], [8.4567701, 124.6246234], [8.4575743, 124.6248752], [8.4576618, 124.6249026], [8.4588649, 124.6252792], [8.4610728, 124.6255958], [8.4612034, 124.6255524], [8.4633218, 124.624948], [8.4643073, 124.6250465], [8.464966, 124.6254432], [8.4675068, 124.6267149], [8.4679006, 124.6268614], [8.4701226, 124.6286514], [8.4707646, 124.6287628], [8.4729154, 124.6377366], [8.4734552, 124.6378314], [8.4738324, 124.6378335], [8.4742612, 124.6378306], [8.47463, 124.6378317], [8.4750779, 124.6378357], [8.4759289, 124.6378301], [8.4765772, 124.6378327], [8.4761146, 124.6413323], [8.4760287, 124.6417161], [8.4760167, 124.6417839], [8.4759491, 124.6421736], [8.4759326, 124.642276], [8.4759579, 124.6424147], [8.4759475, 124.6424782], [8.4759269, 124.6426037], [8.4758354, 124.6432071], [8.4757481, 124.6438118], [8.4757219, 124.643969], [8.4762052, 124.6440221], [8.4769464, 124.6441096], [8.4766567, 124.6450006], [8.4759761, 124.6448763]], "panned_stations": [[8.4759761, 124.6448763]], "travel_time_mins": 46.9187540092697, "vehicles_deployed": 2, "reassignments": 0, "station_id": "Oro_Central", "station_name": "Oro Rescue Central"}, "EGA": {"route_coords": [[8.4759761, 124.6448763], [8.4762052, 124.6440221], [8.4757219, 124.643969], [8.4754235, 124.6439335], [8.4748349, 124.6438713], [8.4734153, 124.6436409], [8.4712102, 124.6430076], [8.4709345, 124.6424982], [8.4729154, 124.6377366], [8.4707646, 124.6287628], [8.4701226, 124.6286514], [8.4679006, 124.6268614], [8.4675068, 124.6267149], [8.464966, 124.6254432], [8.4643073, 124.6250465], [8.4633218, 124.624948], [8.4612034, 124.6255524], [8.4610728, 124.6255958], [8.4588649, 124.6252792], [8.4576618, 124.6249026], [8.4575743, 124.6248752], [8.4567701, 124.6246234], [8.4550702, 124.6240912], [8.4547358, 124.6239866], [8.4550702, 124.6240912], [8.4567701, 124.6246234], [8.4575743, 124.6248752], [8.4576618, 124.6249026], [8.4588649, 124.6252792], [8.4610728, 124.6255958], [8.4612034, 124.6255524], [8.4633218, 124.624948], [8.4643073, 124.6250465], [8.464966, 124.6254432], [8.4675068, 124.6267149], [8.4679006, 124.6268614], [8.4701226, 124.6286514], [8.4707646, 124.6287628], [8.4729154, 124.6377366], [8.4734552, 124.6378314], [8.4738324, 124.6378335], [8.4742612, 124.6378306], [8.47463, 124.6378317], [8.4750779, 124.6378357], [8.4759289, 124.6378301], [8.4765772, 124.6378327], [8.4761146, 124.6413323], [8.4760287, 124.6417161], [8.4760167, 124.6417839], [8.476084, 124.6418033], [8.4767124, 124.6419892], [8.4775409, 124.6422809], [8.477351, 124.6428649], [8.4771694, 124.6434236], [8.4769464, 124.6441096], [8.4766567, 124.6450006], [8.4759761, 124.6448763]], "panned_stations": [[8.4759761, 124.6448763]], "travel_time_mins": 37.41825052388599, "vehicles_deployed": 2, "reassignments": 0, "station_id": "Oro_Central", "station_name": "Oro Rescue Central"}}, {"incident_id": 1, "type": "Fire Problem", "incident_coord": [8.4827162, 124.6367799], "Baseline": {"route_coords": [[8.4797598, 124.6438427], [8.4803726, 124.6439629], [8.4804689, 124.6436973], [8.4805908, 124.6433442], [8.4799729, 124.6431538], [8.479545, 124.6430002], [8.4799581, 124.6416809], [8.4811348, 124.638141], [8.4813485, 124.6375821], [8.4813799, 124.637493], [8.481489, 124.6371833], [8.4823518, 124.6374928], [8.4824972, 124.6372215], [8.4827162, 124.6367799], [8.4824972, 124.6372215], [8.4823518, 124.6374928], [8.4819954, 124.6383131], [8.4811348, 124.638141], [8.4799581, 124.6416809], [8.479545, 124.6430002], [8.4799729, 124.6431538], [8.4798586, 124.6435245], [8.4797598, 124.6438427]], "panned_stations": [[8.4797598, 124.6438427], [8.4778603, 124.6516336]], "travel_time_mins": 21.859487594784458, "vehicles_deployed": 3, "reassignments": 1, "station_id": "BFP_Central", "station_name": "BFP Central"}, "EGA": {"route_coords": [[8.4797598, 124.6438427], [8.4794774, 124.6446547], [8.4790771, 124.6445451], [8.4793152, 124.6437753], [8.4794226, 124.643405], [8.479545, 124.6430002], [8.4799581, 124.6416809], [8.4811348, 124.638141], [8.4813485, 124.6375821], [8.4813799, 124.637493], [8.481489, 124.6371833], [8.4823518, 124.6374928], [8.4824972, 124.6372215], [8.4827162, 124.6367799], [8.4824972, 124.6372215], [8.4823518, 124.6374928], [8.4819954, 124.6383131], [8.4811348, 124.638141], [8.4799581, 124.6416809], [8.479545, 124.6430002], [8.4794226, 124.643405], [8.4793152, 124.6437753], [8.4797598, 124.6438427]], "panned_stations": [[8.4797598, 124.6438427], [8.4778603, 124.6516336]], "travel_time_mins": 20.949519820877804, "vehicles_deployed": 3, "reassignments": 1, "station_id": "BFP_Central", "station_name": "BFP Central"}}, {"incident_id": 2, "type": "Fire Problem", "incident_coord": [8.4743322, 124.646119], "Baseline": {"route_coords": [[8.4778603, 124.6516336], [8.4779037, 124.6508844], [8.4771207, 124.6507846], [8.4770113, 124.6507707], [8.4755366, 124.6506627], [8.4746386, 124.6502744], [8.4745335, 124.6502151], [8.4741693, 124.6500152], [8.4742773, 124.6487902], [8.4742286, 124.6486365], [8.4740277, 124.6474598], [8.4740472, 124.6470095], [8.4743401, 124.6465586], [8.4743322, 124.646119], [8.4743401, 124.6465586], [8.4740472, 124.6470095], [8.4740277, 124.6474598], [8.4742286, 124.6486365], [8.4754819, 124.6484999], [8.4755448, 124.6493697], [8.4755559, 124.6495573], [8.475577, 124.6500328], [8.4755366, 124.6506627], [8.4756057, 124.6514145], [8.4756506, 124.6521113], [8.4768927, 124.6522493], [8.4778017, 124.6523297], [8.4778603, 124.6516336]], "panned_stations": [[8.4797598, 124.6438427], [8.4778603, 124.6516336], [8.4620986, 124.6441841]], "travel_time_mins": 22.887036933680772, "vehicles_deployed": 3, "reassignments": 3, "station_id": "BFP_Cogon", "station_name": "Cogon Substation"}, "EGA": {"route_coords": [[8.4778603, 124.6516336], [8.4779037, 124.6508844], [8.4771207, 124.6507846], [8.4770113, 124.6507707], [8.4755366, 124.6506627], [8.4746386, 124.6502744], [8.4745335, 124.6502151], [8.4741693, 124.6500152], [8.4742773, 124.6487902], [8.4742286, 124.6486365], [8.4740277, 124.6474598], [8.4740472, 124.6470095], [8.4743401, 124.6465586], [8.4743322, 124.646119], [8.4743401, 124.6465586], [8.4740472, 124.6470095], [8.4740277, 124.6474598], [8.4742286, 124.6486365], [8.4754819, 124.6484999], [8.4755448, 124.6493697], [8.4755559, 124.6495573], [8.475577, 124.6500328], [8.4755366, 124.6506627], [8.4756057, 124.6514145], [8.4756506, 124.6521113], [8.4768927, 124.6522493], [8.4778017, 124.6523297], [8.4778603, 124.6516336]], "panned_stations": [[8.4797598, 124.6438427], [8.4778603, 124.6516336], [8.4620986, 124.6441841]], "travel_time_mins": 22.887036933680772, "vehicles_deployed": 3, "reassignments": 3, "station_id": "BFP_Cogon", "station_name": "Cogon Substation"}}, {"incident_id": 3, "type": "Medical Emergency", "incident_coord": [8.4697453, 124.6478079], "Baseline": {"route_coords": [[8.4771823, 124.6500643], [8.4770113, 124.6507707], [8.4755366, 124.6506627], [8.4746386, 124.6502744], [8.4745335, 124.6502151], [8.4741693, 124.6500152], [8.4742773, 124.6487902], [8.4738202, 124.6492946], [8.4733953, 124.6490582], [8.4730238, 124.6488159], [8.4721154, 124.6476714], [8.4716925, 124.6478639], [8.4712183, 124.6481475], [8.4708519, 124.6483272], [8.4706428, 124.6484327], [8.4704941, 124.6485152], [8.4700965, 124.6486928], [8.4698587, 124.6481101], [8.4697453, 124.6478079], [8.4698587, 124.6481101], [8.4700965, 124.6486928], [8.4704941, 124.6485152], [8.4706428, 124.6484327], [8.4708519, 124.6483272], [8.4712183, 124.6481475], [8.4716925, 124.6478639], [8.4721154, 124.6476714], [8.4725468, 124.6474901], [8.4731949, 124.6474446], [8.4736285, 124.6474501], [8.4740277, 124.6474598], [8.4742286, 124.6486365], [8.4754819, 124.6484999], [8.4755448, 124.6493697], [8.4755559, 124.6495573], [8.475577, 124.6500328], [8.4771823, 124.6500643]], "panned_stations": [[8.4759761, 124.6448763], [8.4771823, 124.6500643]], "travel_time_mins": 31.496530901350983, "vehicles_deployed": 2, "reassignments": 2, "station_id": "Oro_Cogon", "station_name": "Oro Rescue Cogon"}, "EGA": {"route_coords": [[8.4771823, 124.6500643], [8.4770113, 124.6507707], [8.4755366, 124.6506627], [8.4756057, 124.6514145], [8.4756506, 124.6521113], [8.4738755, 124.6520572], [8.4719572, 124.6508661], [8.4712565, 124.6504709], [8.470931, 124.6500712], [8.470386, 124.649279], [8.4700965, 124.6486928], [8.4698587, 124.6481101], [8.4697453, 124.6478079], [8.4698587, 124.6481101], [8.4700965, 124.6486928], [8.4704941, 124.6485152], [8.4706428, 124.6484327], [8.4714453, 124.6497186], [8.4719536, 124.649407], [8.474404, 124.6508204], [8.4746386, 124.6502744], [8.4755366, 124.6506627], [8.4756057, 124.6514145], [8.4769852, 124.6514972], [8.4770573, 124.6508702], [8.4771207, 124.6507846], [8.4772953, 124.6500735], [8.4771823, 124.6500643]], "panned_stations": [[8.4759761, 124.6448763], [8.4771823, 124.6500643]], "travel_time_mins": 20.51667448394828, "vehicles_deployed": 2, "reassignments": 2, "station_id": "Oro_Cogon", "station_name": "Oro Rescue Cogon"}}, {"incident_id": 4, "type": "Flood Evacuation / Rescue", "incident_coord": [8.5002493, 124.6298031], "Baseline": {"route_coords": [[8.4844881, 124.6569655], [8.484463, 124.657073], [8.4845673, 124.657089], [8.484592, 124.656982], [8.4849217, 124.6555607], [8.4853385, 124.6536467], [8.4860044, 124.6505229], [8.4862276, 124.6495382], [8.4862079, 124.6493308], [8.4866964, 124.6471231], [8.4889711, 124.6397548], [8.4890568, 124.639714], [8.4903866, 124.6355651], [8.4913981, 124.6337362], [8.4949311, 124.6313716], [8.495898, 124.6308458], [8.4969086, 124.630284], [8.5002231, 124.6321177], [8.5005415, 124.6312217], [8.5008137, 124.630646], [8.5009583, 124.6303544], [8.5010246, 124.6301815], [8.5002493, 124.6298031], [8.5010246, 124.6301815], [8.5009583, 124.6303544], [8.5008137, 124.630646], [8.5005415, 124.6312217], [8.5002231, 124.6321177], [8.4969086, 124.630284], [8.4968537, 124.6301784], [8.4958466, 124.6307405], [8.4948809, 124.6312672], [8.4938479, 124.631812], [8.4913081, 124.6336655], [8.4902631, 124.6355121], [8.489807, 124.6369443], [8.4889455, 124.6396744], [8.4889711, 124.6397548], [8.4866964, 124.6471231], [8.4862079, 124.6493308], [8.4861034, 124.6495074], [8.4858928, 124.6504814], [8.4855562, 124.6520797], [8.4852304, 124.653626], [8.4844881, 124.6569655]], "panned_stations": [[8.4797598, 124.6438427], [8.4844881, 124.6569655]], "travel_time_mins": 35.25890634888865, "vehicles_deployed": 1, "reassignments": 1, "station_id": "BFP_Lapasan", "station_name": "Lapasan Substation"}, "EGA": {"route_coords": [[8.4844881, 124.6569655], [8.484463, 124.657073], [8.4845673, 124.657089], [8.484592, 124.656982], [8.4849217, 124.6555607], [8.4853385, 124.6536467], [8.4860044, 124.6505229], [8.4862276, 124.6495382], [8.4862079, 124.6493308], [8.4866964, 124.6471231], [8.4889711, 124.6397548], [8.4890568, 124.639714], [8.4903866, 124.6355651], [8.4913981, 124.6337362], [8.4949311, 124.6313716], [8.495898, 124.6308458], [8.4969086, 124.630284], [8.5002231, 124.6321177], [8.5005415, 124.6312217], [8.5008137, 124.630646], [8.5009583, 124.6303544], [8.5010246, 124.6301815], [8.5002493, 124.6298031], [8.5010246, 124.6301815], [8.5009583, 124.6303544], [8.5008137, 124.630646], [8.5005415, 124.6312217], [8.5002231, 124.6321177], [8.4969086, 124.630284], [8.4968537, 124.6301784], [8.4958466, 124.6307405], [8.4948809, 124.6312672], [8.4938479, 124.631812], [8.4913081, 124.6336655], [8.4902631, 124.6355121], [8.489807, 124.6369443], [8.4889455, 124.6396744], [8.4889711, 124.6397548], [8.4866964, 124.6471231], [8.4862079, 124.6493308], [8.4861034, 124.6495074], [8.4858928, 124.6504814], [8.4855562, 124.6520797], [8.4852304, 124.653626], [8.4844881, 124.6569655]], "panned_stations": [[8.4797598, 124.6438427], [8.4844881, 124.6569655]], "travel_time_mins": 35.25890634888865, "vehicles_deployed": 1, "reassignments": 1, "station_id": "BFP_Lapasan", "station_name": "Lapasan Substation"}}];
+                        
+                        // Running Totals outside the loop
+                        var baseDeployed = 0;
+                        var baseUnc = 0;
+                        var baseReassign = 0;
+                        var baseStations = new Set();
+                        var baseTimes = [];
+                        
+                        var egaDeployed = 0;
+                        var egaUnc = 0;
+                        var egaReassign = 0;
+                        var egaStations = new Set();
+                        var egaTimes = [];
+                        
+                        function updateRunningMetrics(algo, algoData) {
+                            var prefix = algo === 'Baseline' ? 'baseline' : 'ega';
+                            
+                            if (!algoData || algoData.vehicles_deployed === 0) {
+                                if (algo === 'Baseline') {
+                                    baseUnc += 1;
+                                    document.getElementById('baseline_unc').innerText = baseUnc;
+                                } else {
+                                    egaUnc += 1;
+                                    document.getElementById('ega_unc').innerText = egaUnc;
+                                }
+                                return;
+                            }
+                            
+                            if (algo === 'Baseline') {
+                                baseDeployed += algoData.vehicles_deployed;
+                                document.getElementById('baseline_deployed').innerText = baseDeployed;
+                                
+                                if (algoData.station_id) baseStations.add(algoData.station_id);
+                                document.getElementById('baseline_stats').innerText = baseStations.size;
+                                
+                                baseReassign += algoData.reassignments;
+                                document.getElementById('baseline_reassign').innerText = baseReassign;
+                                
+                                if (algoData.travel_time_mins > 0) {
+                                    baseTimes.push(algoData.travel_time_mins);
+                                    var avg = baseTimes.reduce((a, b) => a + b, 0) / baseTimes.length;
+                                    document.getElementById('baseline_avg').innerText = avg.toFixed(2);
+                                }
+                            } else {
+                                egaDeployed += algoData.vehicles_deployed;
+                                document.getElementById('ega_deployed').innerText = egaDeployed;
+                                
+                                if (algoData.station_id) egaStations.add(algoData.station_id);
+                                document.getElementById('ega_stats').innerText = egaStations.size;
+                                
+                                egaReassign += algoData.reassignments;
+                                document.getElementById('ega_reassign').innerText = egaReassign;
+                                
+                                if (algoData.travel_time_mins > 0) {
+                                    egaTimes.push(algoData.travel_time_mins);
+                                    var avg = egaTimes.reduce((a, b) => a + b, 0) / egaTimes.length;
+                                    document.getElementById('ega_avg').innerText = avg.toFixed(2);
+                                }
+                            }
+                        }
+                        
+                        function runEventSequence() {
+                            var promiseChain = Promise.resolve();
+                            
+                            events.forEach(function(ev) {
+                                promiseChain = promiseChain.then(function() {
+                                    return new Promise(function(resolve) {
+                                        var step_delay = 2000;
+                                        var current_delay = 0;
+                                        
+                                        // 1. Pan to incident and update live status
+                                        setTimeout(function() { 
+                                            map.flyTo(ev.incident_coord, 15, {duration: 1.5}); 
+                                            var b_name = (ev.Baseline && ev.Baseline.station_name) ? ev.Baseline.station_name : "Uncovered";
+                                            var e_name = (ev.EGA && ev.EGA.station_name) ? ev.EGA.station_name : "Uncovered";
+                                            document.getElementById('live_status').innerHTML = "Incident #" + ev.incident_id + " (" + ev.type + ")<br>Baseline ➔ " + b_name + "<br>EGA ➔ " + e_name;
+                                        }, current_delay);
+                                        current_delay += step_delay;
+                                        
+                                        // 2. Pan to checked stations (combine both)
+                                        var all_stations = [];
+                                        if (ev.Baseline && ev.Baseline.panned_stations) all_stations = all_stations.concat(ev.Baseline.panned_stations);
+                                        if (ev.EGA && ev.EGA.panned_stations) all_stations = all_stations.concat(ev.EGA.panned_stations);
+                                        // Deduplicate
+                                        var unique_stations = [];
+                                        var seen = new Set();
+                                        all_stations.forEach(function(st) {
+                                            var key = st[0] + "," + st[1];
+                                            if (!seen.has(key)) {
+                                                seen.add(key);
+                                                unique_stations.push(st);
+                                            }
+                                        });
+                                        
+                                        unique_stations.forEach(function(st_coord) {
+                                            setTimeout(function() { 
+                                                map.flyTo(st_coord, 15, {duration: 1.5}); 
+                                            }, current_delay);
+                                            current_delay += step_delay;
+                                        });
+                                        
+                                        // 3. Pan to starting route and update dashboard
+                                        setTimeout(function() {
+                                            updateRunningMetrics('Baseline', ev.Baseline);
+                                            updateRunningMetrics('EGA', ev.EGA);
+                                            
+                                            // Draw routes
+                                            if (ev.Baseline && ev.Baseline.route_coords && ev.Baseline.route_coords.length > 0) {
+                                                L.polyline(ev.Baseline.route_coords, {color: 'red', weight: 4, dashArray: '5, 5', opacity: 0.7}).addTo(map);
+                                            }
+                                            if (ev.EGA && ev.EGA.route_coords && ev.EGA.route_coords.length > 0) {
+                                                L.polyline(ev.EGA.route_coords, {color: 'blue', weight: 4, opacity: 0.7}).addTo(map);
+                                            }
+                                            
+                                            // Pan to beginning of route if either exists
+                                            var start_coord = null;
+                                            if (ev.Baseline && ev.Baseline.route_coords && ev.Baseline.route_coords.length > 0) start_coord = ev.Baseline.route_coords[0];
+                                            else if (ev.EGA && ev.EGA.route_coords && ev.EGA.route_coords.length > 0) start_coord = ev.EGA.route_coords[0];
+                                            
+                                            if (start_coord) {
+                                                map.flyTo(start_coord, 14, {duration: 1.5});
+                                            }
+                                        }, current_delay);
+                                        current_delay += step_delay;
+                                        
+                                        // 4. Animate the vehicles
+                                        setTimeout(function() {
+                                            var b_coords = (ev.Baseline && ev.Baseline.route_coords) ? ev.Baseline.route_coords : [];
+                                            var e_coords = (ev.EGA && ev.EGA.route_coords) ? ev.EGA.route_coords : [];
+                                            
+                                            if (b_coords.length === 0 && e_coords.length === 0) {
+                                                resolve();
+                                                return;
+                                            }
+                                            
+                                            var markerB = null;
+                                            var markerE = null;
+                                            
+                                            // Use a custom pane to ensure markers stay above lines
+                                            map.createPane('markersPane');
+                                            map.getPane('markersPane').style.zIndex = 650;
+                                            
+                                            if (b_coords.length > 0) {
+                                                markerB = L.circleMarker(b_coords[0], { radius: 8, color: 'white', weight: 2, fillColor: 'red', fillOpacity: 1, pane: 'markersPane' }).addTo(map);
+                                            }
+                                            if (e_coords.length > 0) {
+                                                markerE = L.circleMarker(e_coords[0], { radius: 8, color: 'white', weight: 2, fillColor: 'blue', fillOpacity: 1, pane: 'markersPane' }).addTo(map);
+                                            }
+                                            
+                                            var idxB = 0;
+                                            var idxE = 0;
+                                            var animInterval = setInterval(function() {
+                                                var b_done = idxB >= b_coords.length - 1;
+                                                var e_done = idxE >= e_coords.length - 1;
+                                                
+                                                if (b_done && e_done) {
+                                                    clearInterval(animInterval);
+                                                    resolve();
+                                                    return;
+                                                }
+                                                
+                                                if (!b_done) {
+                                                    idxB++;
+                                                    markerB.setLatLng(b_coords[idxB]);
+                                                }
+                                                if (!e_done) {
+                                                    idxE++;
+                                                    markerE.setLatLng(e_coords[idxE]);
+                                                }
+                                            }, 100); // 100ms per step
+                                        }, current_delay);
+                                    });
+                                });
+                            });
+                        }
+                        
+                        // Start the chronological sequence
+                        runEventSequence();
+                    }
+                }, 1000);
+            });
+        </script>
+        
+    
+            <div class="folium-map" id="map_612703eab1d00528c1d2c6f441e37b03" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_612703eab1d00528c1d2c6f441e37b03 = L.map(
+                "map_612703eab1d00528c1d2c6f441e37b03",
+                {
+                    center: [8.4010937, 124.6110414],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 14,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_42dfe8c2b044d86b4c31d4ba0cbbefb4 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_42dfe8c2b044d86b4c31d4ba0cbbefb4.addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var marker_25fd60717713583ce07b0655eb9e55c8 = L.marker(
+                [8.4797598, 124.6438427],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_b62150342744c0f77f5f0d3d99915667 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_4ceb7146b4e3bc23065a19c655710733 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_01ab37353e1ac353fcf075e0e04e9199 = $(`<div id="html_01ab37353e1ac353fcf075e0e04e9199" style="width: 100.0%; height: 100.0%;">BFP Central</div>`)[0];
+                popup_4ceb7146b4e3bc23065a19c655710733.setContent(html_01ab37353e1ac353fcf075e0e04e9199);
+            
+        
+
+        marker_25fd60717713583ce07b0655eb9e55c8.bindPopup(popup_4ceb7146b4e3bc23065a19c655710733)
+        ;
+
+        
+    
+    
+                marker_25fd60717713583ce07b0655eb9e55c8.setIcon(icon_b62150342744c0f77f5f0d3d99915667);
+            
+    
+            var marker_8b7b6ca51b26bbac8bf0c3eea5fdc63d = L.marker(
+                [8.4844881, 124.6569655],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_4e479c2c6721829515e91d4a083b5cf2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_390fc9fe2d2ccf05782ea179039da7f4 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9c7c7bab76f0d962c899b9c3937962e6 = $(`<div id="html_9c7c7bab76f0d962c899b9c3937962e6" style="width: 100.0%; height: 100.0%;">Lapasan Substation</div>`)[0];
+                popup_390fc9fe2d2ccf05782ea179039da7f4.setContent(html_9c7c7bab76f0d962c899b9c3937962e6);
+            
+        
+
+        marker_8b7b6ca51b26bbac8bf0c3eea5fdc63d.bindPopup(popup_390fc9fe2d2ccf05782ea179039da7f4)
+        ;
+
+        
+    
+    
+                marker_8b7b6ca51b26bbac8bf0c3eea5fdc63d.setIcon(icon_4e479c2c6721829515e91d4a083b5cf2);
+            
+    
+            var marker_b652425eaffaf130edcef42bfbea5989 = L.marker(
+                [8.4778603, 124.6516336],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_cbd69c61a7409f16619f12ecfe8ead4f = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_938ff9ed8bddf8743d6a78f81941cb13 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_768a91fb546e5cd37dccee1abf0eb531 = $(`<div id="html_768a91fb546e5cd37dccee1abf0eb531" style="width: 100.0%; height: 100.0%;">Cogon Substation</div>`)[0];
+                popup_938ff9ed8bddf8743d6a78f81941cb13.setContent(html_768a91fb546e5cd37dccee1abf0eb531);
+            
+        
+
+        marker_b652425eaffaf130edcef42bfbea5989.bindPopup(popup_938ff9ed8bddf8743d6a78f81941cb13)
+        ;
+
+        
+    
+    
+                marker_b652425eaffaf130edcef42bfbea5989.setIcon(icon_cbd69c61a7409f16619f12ecfe8ead4f);
+            
+    
+            var marker_4e7f990b58e6056bc18f68111ed57c3d = L.marker(
+                [8.4987279, 124.6616359],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_416270a3223d600297798efa3cb349c8 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_84bba2b32cc13a97b8f50849e53a2388 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e71de8094cfb16b6e8b7212edb0360e6 = $(`<div id="html_e71de8094cfb16b6e8b7212edb0360e6" style="width: 100.0%; height: 100.0%;">Macabalan Substation</div>`)[0];
+                popup_84bba2b32cc13a97b8f50849e53a2388.setContent(html_e71de8094cfb16b6e8b7212edb0360e6);
+            
+        
+
+        marker_4e7f990b58e6056bc18f68111ed57c3d.bindPopup(popup_84bba2b32cc13a97b8f50849e53a2388)
+        ;
+
+        
+    
+    
+                marker_4e7f990b58e6056bc18f68111ed57c3d.setIcon(icon_416270a3223d600297798efa3cb349c8);
+            
+    
+            var marker_7d8fc8f90eee3518709f89226021f785 = L.marker(
+                [8.4701551, 124.6572379],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_eae0588f942e915bdf4822ea6226596d = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_0a23bee60371bfaea37b180f40a7f7fa = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_4483147d0416b81a261167cd0739869e = $(`<div id="html_4483147d0416b81a261167cd0739869e" style="width: 100.0%; height: 100.0%;">Camaman-an Substation</div>`)[0];
+                popup_0a23bee60371bfaea37b180f40a7f7fa.setContent(html_4483147d0416b81a261167cd0739869e);
+            
+        
+
+        marker_7d8fc8f90eee3518709f89226021f785.bindPopup(popup_0a23bee60371bfaea37b180f40a7f7fa)
+        ;
+
+        
+    
+    
+                marker_7d8fc8f90eee3518709f89226021f785.setIcon(icon_eae0588f942e915bdf4822ea6226596d);
+            
+    
+            var marker_268440592951f70606368db2acd9b908 = L.marker(
+                [8.4620986, 124.6441841],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_d66826e61a979885b125c1798c662510 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b33a61f7b873ce01b9f0363c0deebb5e = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_d44ea974a57e228067ac86f5f586f510 = $(`<div id="html_d44ea974a57e228067ac86f5f586f510" style="width: 100.0%; height: 100.0%;">Macasandig Substation</div>`)[0];
+                popup_b33a61f7b873ce01b9f0363c0deebb5e.setContent(html_d44ea974a57e228067ac86f5f586f510);
+            
+        
+
+        marker_268440592951f70606368db2acd9b908.bindPopup(popup_b33a61f7b873ce01b9f0363c0deebb5e)
+        ;
+
+        
+    
+    
+                marker_268440592951f70606368db2acd9b908.setIcon(icon_d66826e61a979885b125c1798c662510);
+            
+    
+            var marker_9c9fe8a2813d8069e3c180cd99c34309 = L.marker(
+                [8.4773458, 124.6833647],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_94a914bf01be1294882880710c27ec62 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_10d467b3b2f6eaa9ac390eb42d9118e7 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e318571317e354ad9b2d6fb3a0e5b83b = $(`<div id="html_e318571317e354ad9b2d6fb3a0e5b83b" style="width: 100.0%; height: 100.0%;">Tablon Substation</div>`)[0];
+                popup_10d467b3b2f6eaa9ac390eb42d9118e7.setContent(html_e318571317e354ad9b2d6fb3a0e5b83b);
+            
+        
+
+        marker_9c9fe8a2813d8069e3c180cd99c34309.bindPopup(popup_10d467b3b2f6eaa9ac390eb42d9118e7)
+        ;
+
+        
+    
+    
+                marker_9c9fe8a2813d8069e3c180cd99c34309.setIcon(icon_94a914bf01be1294882880710c27ec62);
+            
+    
+            var marker_8572c8147f286b0b851ffdeb50261f9a = L.marker(
+                [8.4746492, 124.6872007],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_400ead2e74c56b8f62063558926f51c5 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ce9ae6ccdc07ee52a94251fd1e76482d = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_8b0263ea035174232c9bf82a70e505f7 = $(`<div id="html_8b0263ea035174232c9bf82a70e505f7" style="width: 100.0%; height: 100.0%;">Agusan Substation</div>`)[0];
+                popup_ce9ae6ccdc07ee52a94251fd1e76482d.setContent(html_8b0263ea035174232c9bf82a70e505f7);
+            
+        
+
+        marker_8572c8147f286b0b851ffdeb50261f9a.bindPopup(popup_ce9ae6ccdc07ee52a94251fd1e76482d)
+        ;
+
+        
+    
+    
+                marker_8572c8147f286b0b851ffdeb50261f9a.setIcon(icon_400ead2e74c56b8f62063558926f51c5);
+            
+    
+            var marker_a4bb225e59fd07afc0a7b835027c1de4 = L.marker(
+                [8.4746492, 124.6872007],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_0a7c735566d59673757a80b0ff144787 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6614644433c851908c53af1b6237063a = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_24887b99c193b9124fb9e746548e7999 = $(`<div id="html_24887b99c193b9124fb9e746548e7999" style="width: 100.0%; height: 100.0%;">Puerto Substation</div>`)[0];
+                popup_6614644433c851908c53af1b6237063a.setContent(html_24887b99c193b9124fb9e746548e7999);
+            
+        
+
+        marker_a4bb225e59fd07afc0a7b835027c1de4.bindPopup(popup_6614644433c851908c53af1b6237063a)
+        ;
+
+        
+    
+    
+                marker_a4bb225e59fd07afc0a7b835027c1de4.setIcon(icon_0a7c735566d59673757a80b0ff144787);
+            
+    
+            var marker_17a7c746e2cfba7dce984658deb391a4 = L.marker(
+                [8.4746492, 124.6872007],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_2ff6edcdcfdd2b24445fdcb4f9d15ca7 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_226ce90e4815e41edf7be7155e24dd21 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9c9dcca8c4b18f29d76b3516f3f11531 = $(`<div id="html_9c9dcca8c4b18f29d76b3516f3f11531" style="width: 100.0%; height: 100.0%;">Bugo Substation</div>`)[0];
+                popup_226ce90e4815e41edf7be7155e24dd21.setContent(html_9c9dcca8c4b18f29d76b3516f3f11531);
+            
+        
+
+        marker_17a7c746e2cfba7dce984658deb391a4.bindPopup(popup_226ce90e4815e41edf7be7155e24dd21)
+        ;
+
+        
+    
+    
+                marker_17a7c746e2cfba7dce984658deb391a4.setIcon(icon_2ff6edcdcfdd2b24445fdcb4f9d15ca7);
+            
+    
+            var marker_a69729b0a71f2a3adb8d0d9b5f0ed943 = L.marker(
+                [8.4759761, 124.6448763],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_97fd09b70d1e11c0b219d76fb5d961fe = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plus-square",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6ab4f26f704522087ceb4c921abe9ec1 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_16d8b7fed5f896b72da7bf3a085fc698 = $(`<div id="html_16d8b7fed5f896b72da7bf3a085fc698" style="width: 100.0%; height: 100.0%;">Oro Rescue Central</div>`)[0];
+                popup_6ab4f26f704522087ceb4c921abe9ec1.setContent(html_16d8b7fed5f896b72da7bf3a085fc698);
+            
+        
+
+        marker_a69729b0a71f2a3adb8d0d9b5f0ed943.bindPopup(popup_6ab4f26f704522087ceb4c921abe9ec1)
+        ;
+
+        
+    
+    
+                marker_a69729b0a71f2a3adb8d0d9b5f0ed943.setIcon(icon_97fd09b70d1e11c0b219d76fb5d961fe);
+            
+    
+            var marker_ce03a2d1f99f23116353b53427b30613 = L.marker(
+                [8.484152, 124.6584828],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_67b6a85ef8ffccc0ee4667057457227c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plus-square",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_49ee58e1c4959480c3ed3301172fc11c = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_dcf1e165b18e99a3ccfe77f5f06e2bb5 = $(`<div id="html_dcf1e165b18e99a3ccfe77f5f06e2bb5" style="width: 100.0%; height: 100.0%;">Oro Rescue Lapasan</div>`)[0];
+                popup_49ee58e1c4959480c3ed3301172fc11c.setContent(html_dcf1e165b18e99a3ccfe77f5f06e2bb5);
+            
+        
+
+        marker_ce03a2d1f99f23116353b53427b30613.bindPopup(popup_49ee58e1c4959480c3ed3301172fc11c)
+        ;
+
+        
+    
+    
+                marker_ce03a2d1f99f23116353b53427b30613.setIcon(icon_67b6a85ef8ffccc0ee4667057457227c);
+            
+    
+            var marker_befecbbd87fbef38ca4f46d7a5e4d66e = L.marker(
+                [8.4771823, 124.6500643],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_36e5d4347e777523e1f52d0891692c14 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plus-square",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b5bb16a989116a3b822c238317c6b4ac = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_004e441a8038c461f33b0d5c480f6737 = $(`<div id="html_004e441a8038c461f33b0d5c480f6737" style="width: 100.0%; height: 100.0%;">Oro Rescue Cogon</div>`)[0];
+                popup_b5bb16a989116a3b822c238317c6b4ac.setContent(html_004e441a8038c461f33b0d5c480f6737);
+            
+        
+
+        marker_befecbbd87fbef38ca4f46d7a5e4d66e.bindPopup(popup_b5bb16a989116a3b822c238317c6b4ac)
+        ;
+
+        
+    
+    
+                marker_befecbbd87fbef38ca4f46d7a5e4d66e.setIcon(icon_36e5d4347e777523e1f52d0891692c14);
+            
+    
+            var marker_57d8c67f163e3c05f4426cce579da6a6 = L.marker(
+                [8.4952327, 124.6581364],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_926f99da54a7aea2ea4f6f7f2a30cc51 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plus-square",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_afd462b369f3e8472c20e76507a6099f = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_8545b0c0be26431f72b091864354030f = $(`<div id="html_8545b0c0be26431f72b091864354030f" style="width: 100.0%; height: 100.0%;">Oro Rescue Macabalan</div>`)[0];
+                popup_afd462b369f3e8472c20e76507a6099f.setContent(html_8545b0c0be26431f72b091864354030f);
+            
+        
+
+        marker_57d8c67f163e3c05f4426cce579da6a6.bindPopup(popup_afd462b369f3e8472c20e76507a6099f)
+        ;
+
+        
+    
+    
+                marker_57d8c67f163e3c05f4426cce579da6a6.setIcon(icon_926f99da54a7aea2ea4f6f7f2a30cc51);
+            
+    
+            var marker_8d42057f61f2e8454726cac89bd57416 = L.marker(
+                [8.4746492, 124.6872007],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_8ac9c42d153008f6c2743ef0f7d69596 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plus-square",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_d77ff3c0db653752347b5d63358f3a6f = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_a465da41e0b2d35c80acb71faf4c5df1 = $(`<div id="html_a465da41e0b2d35c80acb71faf4c5df1" style="width: 100.0%; height: 100.0%;">Oro Rescue Puerto</div>`)[0];
+                popup_d77ff3c0db653752347b5d63358f3a6f.setContent(html_a465da41e0b2d35c80acb71faf4c5df1);
+            
+        
+
+        marker_8d42057f61f2e8454726cac89bd57416.bindPopup(popup_d77ff3c0db653752347b5d63358f3a6f)
+        ;
+
+        
+    
+    
+                marker_8d42057f61f2e8454726cac89bd57416.setIcon(icon_8ac9c42d153008f6c2743ef0f7d69596);
+            
+    
+            var marker_408150796a469998ff23aae7b6066c39 = L.marker(
+                [8.4746492, 124.6872007],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_ca889542768da18f511264e3def48466 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plus-square",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_95d35b2fad0809dd3634339de3fd4657 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_83491d12c936ab302568c823be6c4d71 = $(`<div id="html_83491d12c936ab302568c823be6c4d71" style="width: 100.0%; height: 100.0%;">Oro Rescue Bugo</div>`)[0];
+                popup_95d35b2fad0809dd3634339de3fd4657.setContent(html_83491d12c936ab302568c823be6c4d71);
+            
+        
+
+        marker_408150796a469998ff23aae7b6066c39.bindPopup(popup_95d35b2fad0809dd3634339de3fd4657)
+        ;
+
+        
+    
+    
+                marker_408150796a469998ff23aae7b6066c39.setIcon(icon_ca889542768da18f511264e3def48466);
+            
+    
+            var poly_line_994fa25b7ecb57a230df0f955a64a197 = L.polyline(
+                [[8.4759761, 124.6448763], [8.4762052, 124.6440221], [8.4757219, 124.643969], [8.4754235, 124.6439335], [8.4748349, 124.6438713], [8.4734153, 124.6436409], [8.4712102, 124.6430076], [8.4709345, 124.6424982], [8.4729154, 124.6377366], [8.4707646, 124.6287628], [8.4701226, 124.6286514], [8.4679006, 124.6268614], [8.4675068, 124.6267149], [8.464966, 124.6254432], [8.4643073, 124.6250465], [8.4633218, 124.624948], [8.4612034, 124.6255524], [8.4610728, 124.6255958], [8.4588649, 124.6252792], [8.4576618, 124.6249026], [8.4575743, 124.6248752], [8.4567701, 124.6246234], [8.4550702, 124.6240912], [8.4547358, 124.6239866], [8.4550702, 124.6240912], [8.4567701, 124.6246234], [8.4575743, 124.6248752], [8.4576618, 124.6249026], [8.4588649, 124.6252792], [8.4610728, 124.6255958], [8.4612034, 124.6255524], [8.4633218, 124.624948], [8.4643073, 124.6250465], [8.464966, 124.6254432], [8.4675068, 124.6267149], [8.4679006, 124.6268614], [8.4701226, 124.6286514], [8.4707646, 124.6287628], [8.4729154, 124.6377366], [8.4734552, 124.6378314], [8.4738324, 124.6378335], [8.4742612, 124.6378306], [8.47463, 124.6378317], [8.4750779, 124.6378357], [8.4759289, 124.6378301], [8.4765772, 124.6378327], [8.4761146, 124.6413323], [8.4760287, 124.6417161], [8.4760167, 124.6417839], [8.476084, 124.6418033], [8.4767124, 124.6419892], [8.4775409, 124.6422809], [8.477351, 124.6428649], [8.4771694, 124.6434236], [8.4769464, 124.6441096], [8.4766567, 124.6450006], [8.4759761, 124.6448763]],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.3, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var marker_f24f86c28710d286530163ff180aa76b = L.marker(
+                [8.4759761, 124.6448763],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_05e288633d779fdad9beba15df0593b7 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_987c6fe6fbe5528382efdebb82284579 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_1cee9148fc756786aecce93b44d0ac1a = $(`<div id="html_1cee9148fc756786aecce93b44d0ac1a" style="width: 100.0%; height: 100.0%;">Deployment Station</div>`)[0];
+                popup_987c6fe6fbe5528382efdebb82284579.setContent(html_1cee9148fc756786aecce93b44d0ac1a);
+            
+        
+
+        marker_f24f86c28710d286530163ff180aa76b.bindPopup(popup_987c6fe6fbe5528382efdebb82284579)
+        ;
+
+        
+    
+    
+                marker_f24f86c28710d286530163ff180aa76b.setIcon(icon_05e288633d779fdad9beba15df0593b7);
+            
+    
+            var marker_7099d20277f5ab7fa409010be82e4d59 = L.marker(
+                [8.4588649, 124.6252792],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_ebb31d95ddd47664def1650b88221dd3 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_806130008d26df925becfff8b2577fef = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_227724e75b55c537ca556c326966f0bd = $(`<div id="html_227724e75b55c537ca556c326966f0bd" style="width: 100.0%; height: 100.0%;">Incident Location</div>`)[0];
+                popup_806130008d26df925becfff8b2577fef.setContent(html_227724e75b55c537ca556c326966f0bd);
+            
+        
+
+        marker_7099d20277f5ab7fa409010be82e4d59.bindPopup(popup_806130008d26df925becfff8b2577fef)
+        ;
+
+        
+    
+    
+                marker_7099d20277f5ab7fa409010be82e4d59.setIcon(icon_ebb31d95ddd47664def1650b88221dd3);
+            
+    
+            var poly_line_35e65e7e4b97979401d94a6a08550de7 = L.polyline(
+                [[8.4797598, 124.6438427], [8.4794774, 124.6446547], [8.4790771, 124.6445451], [8.4793152, 124.6437753], [8.4794226, 124.643405], [8.479545, 124.6430002], [8.4799581, 124.6416809], [8.4811348, 124.638141], [8.4813485, 124.6375821], [8.4813799, 124.637493], [8.481489, 124.6371833], [8.4823518, 124.6374928], [8.4824972, 124.6372215], [8.4827162, 124.6367799], [8.4824972, 124.6372215], [8.4823518, 124.6374928], [8.4819954, 124.6383131], [8.4811348, 124.638141], [8.4799581, 124.6416809], [8.479545, 124.6430002], [8.4794226, 124.643405], [8.4793152, 124.6437753], [8.4797598, 124.6438427]],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.3, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var marker_63b2864ac9d748d9a90d858a304c4daf = L.marker(
+                [8.4797598, 124.6438427],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_c3a3e2293062c01ce4f2f59b186156a2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_99b88f0cbc843356c9a5d3b0f0dba399 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_74c338fbbfb782b5bc166abc681a46d5 = $(`<div id="html_74c338fbbfb782b5bc166abc681a46d5" style="width: 100.0%; height: 100.0%;">Deployment Station</div>`)[0];
+                popup_99b88f0cbc843356c9a5d3b0f0dba399.setContent(html_74c338fbbfb782b5bc166abc681a46d5);
+            
+        
+
+        marker_63b2864ac9d748d9a90d858a304c4daf.bindPopup(popup_99b88f0cbc843356c9a5d3b0f0dba399)
+        ;
+
+        
+    
+    
+                marker_63b2864ac9d748d9a90d858a304c4daf.setIcon(icon_c3a3e2293062c01ce4f2f59b186156a2);
+            
+    
+            var marker_57fccc8dabfa4f200e1c402e5b1154fe = L.marker(
+                [8.4823518, 124.6374928],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_b89d337c9a83f17c895b09f5a93d8536 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_0c574fe35813a5155cbd430d9d4ddbee = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_18e618763753d39307783ee07a8a4475 = $(`<div id="html_18e618763753d39307783ee07a8a4475" style="width: 100.0%; height: 100.0%;">Incident Location</div>`)[0];
+                popup_0c574fe35813a5155cbd430d9d4ddbee.setContent(html_18e618763753d39307783ee07a8a4475);
+            
+        
+
+        marker_57fccc8dabfa4f200e1c402e5b1154fe.bindPopup(popup_0c574fe35813a5155cbd430d9d4ddbee)
+        ;
+
+        
+    
+    
+                marker_57fccc8dabfa4f200e1c402e5b1154fe.setIcon(icon_b89d337c9a83f17c895b09f5a93d8536);
+            
+    
+            var poly_line_7fda4362e55cdd26a3fdb12e2ad339a1 = L.polyline(
+                [[8.4778603, 124.6516336], [8.4779037, 124.6508844], [8.4771207, 124.6507846], [8.4770113, 124.6507707], [8.4755366, 124.6506627], [8.4746386, 124.6502744], [8.4745335, 124.6502151], [8.4741693, 124.6500152], [8.4742773, 124.6487902], [8.4742286, 124.6486365], [8.4740277, 124.6474598], [8.4740472, 124.6470095], [8.4743401, 124.6465586], [8.4743322, 124.646119], [8.4743401, 124.6465586], [8.4740472, 124.6470095], [8.4740277, 124.6474598], [8.4742286, 124.6486365], [8.4754819, 124.6484999], [8.4755448, 124.6493697], [8.4755559, 124.6495573], [8.475577, 124.6500328], [8.4755366, 124.6506627], [8.4756057, 124.6514145], [8.4756506, 124.6521113], [8.4768927, 124.6522493], [8.4778017, 124.6523297], [8.4778603, 124.6516336]],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.3, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var marker_1fa63842489f3dee7d40e79935f4834b = L.marker(
+                [8.4778603, 124.6516336],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_2eae5cb11ae5f5760fcd5bbd616c71b7 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6214df143a20d43947a0ab0f5cc8837c = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_f6e1ea85808dfde5d42f47aaf8505240 = $(`<div id="html_f6e1ea85808dfde5d42f47aaf8505240" style="width: 100.0%; height: 100.0%;">Deployment Station</div>`)[0];
+                popup_6214df143a20d43947a0ab0f5cc8837c.setContent(html_f6e1ea85808dfde5d42f47aaf8505240);
+            
+        
+
+        marker_1fa63842489f3dee7d40e79935f4834b.bindPopup(popup_6214df143a20d43947a0ab0f5cc8837c)
+        ;
+
+        
+    
+    
+                marker_1fa63842489f3dee7d40e79935f4834b.setIcon(icon_2eae5cb11ae5f5760fcd5bbd616c71b7);
+            
+    
+            var marker_25aadb392e2c9541562245e9428bee25 = L.marker(
+                [8.4743401, 124.6465586],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_af4e170229c91215f7ae427112bb4d4e = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_66118a0c7f3a762506c65051c9778dd2 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_261be291bda84cc7fce38e3cfbbd1ef9 = $(`<div id="html_261be291bda84cc7fce38e3cfbbd1ef9" style="width: 100.0%; height: 100.0%;">Incident Location</div>`)[0];
+                popup_66118a0c7f3a762506c65051c9778dd2.setContent(html_261be291bda84cc7fce38e3cfbbd1ef9);
+            
+        
+
+        marker_25aadb392e2c9541562245e9428bee25.bindPopup(popup_66118a0c7f3a762506c65051c9778dd2)
+        ;
+
+        
+    
+    
+                marker_25aadb392e2c9541562245e9428bee25.setIcon(icon_af4e170229c91215f7ae427112bb4d4e);
+            
+    
+            var poly_line_c8d9b9b5cc7233dc7a45f070f7ceb369 = L.polyline(
+                [[8.4771823, 124.6500643], [8.4770113, 124.6507707], [8.4755366, 124.6506627], [8.4756057, 124.6514145], [8.4756506, 124.6521113], [8.4738755, 124.6520572], [8.4719572, 124.6508661], [8.4712565, 124.6504709], [8.470931, 124.6500712], [8.470386, 124.649279], [8.4700965, 124.6486928], [8.4698587, 124.6481101], [8.4697453, 124.6478079], [8.4698587, 124.6481101], [8.4700965, 124.6486928], [8.4704941, 124.6485152], [8.4706428, 124.6484327], [8.4714453, 124.6497186], [8.4719536, 124.649407], [8.474404, 124.6508204], [8.4746386, 124.6502744], [8.4755366, 124.6506627], [8.4756057, 124.6514145], [8.4769852, 124.6514972], [8.4770573, 124.6508702], [8.4771207, 124.6507846], [8.4772953, 124.6500735], [8.4771823, 124.6500643]],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.3, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var marker_938c421d49d0c800c4df09e4c10d3ae7 = L.marker(
+                [8.4771823, 124.6500643],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_7c24aa093b860c2470e435ba1a4a9dc6 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_2abd94c9bdfa48dada3bdad58492362e = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_f6ea37d6cf45ecc29d4062e1458914c9 = $(`<div id="html_f6ea37d6cf45ecc29d4062e1458914c9" style="width: 100.0%; height: 100.0%;">Deployment Station</div>`)[0];
+                popup_2abd94c9bdfa48dada3bdad58492362e.setContent(html_f6ea37d6cf45ecc29d4062e1458914c9);
+            
+        
+
+        marker_938c421d49d0c800c4df09e4c10d3ae7.bindPopup(popup_2abd94c9bdfa48dada3bdad58492362e)
+        ;
+
+        
+    
+    
+                marker_938c421d49d0c800c4df09e4c10d3ae7.setIcon(icon_7c24aa093b860c2470e435ba1a4a9dc6);
+            
+    
+            var marker_42d824608d37bbfa9318e9b5c4a49c39 = L.marker(
+                [8.4700965, 124.6486928],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_f8d898c0070bc4761efed68c5dd772ec = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_159169b934852ee15b2fc9ae305bb21c = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_a7c790b857a682c3d6b2315b4c749bf0 = $(`<div id="html_a7c790b857a682c3d6b2315b4c749bf0" style="width: 100.0%; height: 100.0%;">Incident Location</div>`)[0];
+                popup_159169b934852ee15b2fc9ae305bb21c.setContent(html_a7c790b857a682c3d6b2315b4c749bf0);
+            
+        
+
+        marker_42d824608d37bbfa9318e9b5c4a49c39.bindPopup(popup_159169b934852ee15b2fc9ae305bb21c)
+        ;
+
+        
+    
+    
+                marker_42d824608d37bbfa9318e9b5c4a49c39.setIcon(icon_f8d898c0070bc4761efed68c5dd772ec);
+            
+    
+            var poly_line_7fe582e0c0d80b123c96eaaea92181b0 = L.polyline(
+                [[8.4844881, 124.6569655], [8.484463, 124.657073], [8.4845673, 124.657089], [8.484592, 124.656982], [8.4849217, 124.6555607], [8.4853385, 124.6536467], [8.4860044, 124.6505229], [8.4862276, 124.6495382], [8.4862079, 124.6493308], [8.4866964, 124.6471231], [8.4889711, 124.6397548], [8.4890568, 124.639714], [8.4903866, 124.6355651], [8.4913981, 124.6337362], [8.4949311, 124.6313716], [8.495898, 124.6308458], [8.4969086, 124.630284], [8.5002231, 124.6321177], [8.5005415, 124.6312217], [8.5008137, 124.630646], [8.5009583, 124.6303544], [8.5010246, 124.6301815], [8.5002493, 124.6298031], [8.5010246, 124.6301815], [8.5009583, 124.6303544], [8.5008137, 124.630646], [8.5005415, 124.6312217], [8.5002231, 124.6321177], [8.4969086, 124.630284], [8.4968537, 124.6301784], [8.4958466, 124.6307405], [8.4948809, 124.6312672], [8.4938479, 124.631812], [8.4913081, 124.6336655], [8.4902631, 124.6355121], [8.489807, 124.6369443], [8.4889455, 124.6396744], [8.4889711, 124.6397548], [8.4866964, 124.6471231], [8.4862079, 124.6493308], [8.4861034, 124.6495074], [8.4858928, 124.6504814], [8.4855562, 124.6520797], [8.4852304, 124.653626], [8.4844881, 124.6569655]],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "blue", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.3, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var marker_42a5f0181a78eb495734488cdf6ce4c2 = L.marker(
+                [8.4844881, 124.6569655],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_cb8e6cd896feda1d554ea54febbaa5cf = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_7d617de7181adb8d8afd9c5a9882c616 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_1b5e382a2e2243a45d8a3658bb85cb1f = $(`<div id="html_1b5e382a2e2243a45d8a3658bb85cb1f" style="width: 100.0%; height: 100.0%;">Deployment Station</div>`)[0];
+                popup_7d617de7181adb8d8afd9c5a9882c616.setContent(html_1b5e382a2e2243a45d8a3658bb85cb1f);
+            
+        
+
+        marker_42a5f0181a78eb495734488cdf6ce4c2.bindPopup(popup_7d617de7181adb8d8afd9c5a9882c616)
+        ;
+
+        
+    
+    
+                marker_42a5f0181a78eb495734488cdf6ce4c2.setIcon(icon_cb8e6cd896feda1d554ea54febbaa5cf);
+            
+    
+            var marker_d2d3d93256037e076d49d247b11c4695 = L.marker(
+                [8.5002493, 124.6298031],
+                {
+}
+            ).addTo(map_612703eab1d00528c1d2c6f441e37b03);
+        
+    
+            var icon_b45c509f3fe9fc690008fa58df78583d = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "fire",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_4fb204ece3a56b19ea0f369695a7a56a = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_cd864b886d3aa84ecd12a4e8b56a388e = $(`<div id="html_cd864b886d3aa84ecd12a4e8b56a388e" style="width: 100.0%; height: 100.0%;">Incident Location</div>`)[0];
+                popup_4fb204ece3a56b19ea0f369695a7a56a.setContent(html_cd864b886d3aa84ecd12a4e8b56a388e);
+            
+        
+
+        marker_d2d3d93256037e076d49d247b11c4695.bindPopup(popup_4fb204ece3a56b19ea0f369695a7a56a)
+        ;
+
+        
+    
+    
+                marker_d2d3d93256037e076d49d247b11c4695.setIcon(icon_b45c509f3fe9fc690008fa58df78583d);
+            
+</script>
+</html>
